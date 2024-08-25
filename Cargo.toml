@@ -12,3 +12,8 @@ grandine_ssz = { package = "ssz", git = "https://github.com/grandinetech/grandin
 [[bench]]
 name = "arena"
 harness = false
+
+[features]
+default = ["sigp", "grandine"]
+sigp = []
+grandine = []

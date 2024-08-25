@@ -9,6 +9,7 @@ fn ssz_arena(c: &mut Criterion) {
     let mut group = c.benchmark_group("SSZ Decode");
     let block_bytes: Vec<u8> = std::fs::read("beacon-block.ssz").unwrap();
     for bytes in [block_bytes].iter() {
+        #[cfg(feature = "sigp")]
         group.bench_with_input(
             BenchmarkId::new("Lighthouse", "SignedBeaconBlock decode"),
             bytes,
@@ -21,6 +22,7 @@ fn ssz_arena(c: &mut Criterion) {
                 })
             },
         );
+        #[cfg(feature = "grandine")]
         group.bench_with_input(
             BenchmarkId::new("Grandine", "SignedBeaconBlock decode"),
             bytes,
