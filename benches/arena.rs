@@ -1,4 +1,4 @@
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use grandine_ssz::SszRead;
 use grandine_types::{
     combined::{BeaconState as GrandineBeaconState, SignedBeaconBlock as GrandineBeaconBlock},
@@ -12,11 +12,14 @@ use sigp_types::{
 
 fn ssz_arena(c: &mut Criterion) {
     let mut group = c.benchmark_group("SSZ Decode");
+    group.sample_size(10);
 
     let block_bytes: Vec<u8> = std::fs::read("beacon-block.ssz").unwrap();
     let state_bytes: Vec<u8> = std::fs::read("beacon-state.ssz").unwrap();
 
     for bytes in [block_bytes].iter() {
+        group.throughput(Throughput::Bytes(bytes.len() as u64));
+
         #[cfg(feature = "sigp")]
         group.bench_with_input(
             BenchmarkId::new("Lighthouse", "SignedBeaconBlock"),
@@ -43,6 +46,8 @@ fn ssz_arena(c: &mut Criterion) {
     }
 
     for bytes in [state_bytes].iter() {
+        group.throughput(Throughput::Bytes(bytes.len() as u64));
+
         #[cfg(feature = "sigp")]
         group.bench_with_input(
             BenchmarkId::new("Lighthouse", "BeaconState"),

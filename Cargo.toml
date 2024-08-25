@@ -14,6 +14,6 @@ name = "arena"
 harness = false
 
 [features]
-default = ["sigp", "grandine"]
+default = ["sigp"]
 sigp = []
 grandine = []
