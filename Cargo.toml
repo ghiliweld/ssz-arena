@@ -1,0 +1,14 @@
+[package]
+name = "ssz-arena"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+criterion = "0.5.1"
+sigp_types = { package = "types", git = "https://github.com/sigp/lighthouse.git" }
+grandine_types = { package = "types", git = "https://github.com/grandinetech/grandine.git" }
+grandine_ssz = { package = "ssz", git = "https://github.com/grandinetech/grandine.git" }
+
+[[bench]]
+name = "arena"
+harness = false
