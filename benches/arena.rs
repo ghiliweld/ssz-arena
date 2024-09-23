@@ -6,13 +6,19 @@ use grandine_types::{
     preset::Mainnet,
 };
 use sigp_types::{
-    BeaconState as SigpBeaconState, ChainSpec, ForkName, MainnetEthSpec,
+    BeaconState as SigpBeaconState, ChainSpec, ForkName, List as SigpList, MainnetEthSpec,
     SignedBeaconBlock as SigpBeaconBlock,
 };
 
+type C = typenum::U1099511627776;
+const N: u64 = 1_000_000;
+
 fn ssz_arena(c: &mut Criterion) {
     let mut group = c.benchmark_group("SSZ Decode");
-    group.sample_size(10);
+
+    // basic test case
+    let size = N;
+    let sigp_list_bytes = SigpList::<u64, C>::try_from_iter(0..size).unwrap();
 
     let block_bytes: Vec<u8> = std::fs::read("beacon-block.ssz").unwrap();
     let state_bytes: Vec<u8> = std::fs::read("beacon-state.ssz").unwrap();
@@ -21,6 +27,12 @@ fn ssz_arena(c: &mut Criterion) {
         group.throughput(Throughput::Bytes(bytes.len() as u64));
 
         #[cfg(feature = "sigp")]
+        group.bench_with_input(BenchmarkId::new("Lighthouse", "List"), bytes, |b, bytes| {
+            b.iter(|| {
+                SigpBeaconBlock::<MainnetEthSpec>::from_ssz_bytes_for_fork(bytes, ForkName::Deneb)
+            })
+        });
+        #[cfg(all(feature = "sigp", feature = "block"))]
         group.bench_with_input(
             BenchmarkId::new("Lighthouse", "SignedBeaconBlock"),
             bytes,
@@ -33,7 +45,7 @@ fn ssz_arena(c: &mut Criterion) {
                 })
             },
         );
-        #[cfg(feature = "grandine")]
+        #[cfg(all(feature = "grandine", feature = "block"))]
         group.bench_with_input(
             BenchmarkId::new("Grandine", "SignedBeaconBlock"),
             bytes,
@@ -48,7 +60,7 @@ fn ssz_arena(c: &mut Criterion) {
     for bytes in [state_bytes].iter() {
         group.throughput(Throughput::Bytes(bytes.len() as u64));
 
-        #[cfg(feature = "sigp")]
+        #[cfg(all(feature = "sigp", feature = "state"))]
         group.bench_with_input(
             BenchmarkId::new("Lighthouse", "BeaconState"),
             bytes,
@@ -58,7 +70,7 @@ fn ssz_arena(c: &mut Criterion) {
                 })
             },
         );
-        #[cfg(feature = "grandine")]
+        #[cfg(all(feature = "grandine", feature = "state"))]
         group.bench_with_input(
             BenchmarkId::new("Grandine", "BeaconState"),
             bytes,
@@ -73,5 +85,5 @@ fn ssz_arena(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, ssz_arena);
-criterion_main!(benches);
+// criterion_group!(benches, ssz_arena);
+// criterion_main!(benches);

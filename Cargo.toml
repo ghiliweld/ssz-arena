@@ -8,12 +8,21 @@ criterion = "0.5.1"
 sigp_types = { package = "types", git = "https://github.com/sigp/lighthouse.git" }
 grandine_types = { package = "types", git = "https://github.com/grandinetech/grandine.git" }
 grandine_ssz = { package = "ssz", git = "https://github.com/grandinetech/grandine.git" }
+typenum = "1.17.0"
+divan = "0.1.14"
+ethereum_ssz = "0.7.1"
+milhouse = "0.3.0"
+reqwest = { version = "0.12.7", features = ["blocking", "json"] }
+serde = "1.0.210"
+ethereum_ssz_derive = "0.8.0"
 
 [[bench]]
-name = "arena"
+name = "divan"
 harness = false
 
 [features]
-default = ["sigp"]
+default = ["sigp", "block"]
 sigp = []
 grandine = []
+block = []
+state = []
