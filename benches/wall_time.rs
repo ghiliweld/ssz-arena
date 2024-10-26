@@ -87,18 +87,18 @@ fn beacon_block(c: &mut Criterion) {
         },
     );
 
-    // //#[cfg(feature = "grandine")]
-    // let beacon_block = GrandineBeaconBlock::<Mainnet>::from_ssz_unchecked(
-    //     &Config::mainnet(),
-    //     block_bytes.as_slice(),
-    // )
-    // .unwrap();
-    // #[cfg(feature = "grandine")]
-    // group.bench_with_input(
-    //     BenchmarkId::new("Grandine", "encode"),
-    //     &beacon_block,
-    //     |b, bytes| b.iter(|| beacon_block.to_ssz()),
-    // );
+    //#[cfg(feature = "grandine")]
+    let beacon_block = GrandineBeaconBlock::<Mainnet>::from_ssz_unchecked(
+        &Config::mainnet(),
+        block_bytes.as_slice(),
+    )
+    .unwrap();
+    #[cfg(feature = "grandine")]
+    group.bench_with_input(
+        BenchmarkId::new("Grandine", "encode"),
+        &beacon_block,
+        |b, bytes| b.iter(|| beacon_block.to_ssz()),
+    );
 
     group.finish();
 }
