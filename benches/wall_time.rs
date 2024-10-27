@@ -84,7 +84,7 @@ fn basic_types(c: &mut Criterion) {
     );
     #[cfg(feature = "grandine")]
     group.bench_with_input(
-        BenchmarkId::new("Grainde", "encode"),
+        BenchmarkId::new("Grandine", "encode"),
         &grandine_list,
         |b, list| b.iter(|| SszWrite::to_ssz(list)),
     );
