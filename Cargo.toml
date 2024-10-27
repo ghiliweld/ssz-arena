@@ -18,6 +18,11 @@ reqwest = { version = "0.12.7", features = ["blocking", "json"] }
 serde = "1.0.210"
 ethereum_ssz_derive = "0.8.0"
 dhat = "0.3.3"
+bytes = "1.8.0"
+alloy-primitives = "0.8.9"
+ethereum-types = "0.15.1"
+itertools = "0.13.0"
+ssz_types = "0.8.0"
 
 [dev-dependencies]
 

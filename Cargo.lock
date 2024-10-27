@@ -3226,14 +3226,19 @@ dependencies = [
 name = "ssz-arena"
 version = "0.1.0"
 dependencies = [
+ "alloy-primitives 0.8.9",
+ "bytes",
  "criterion",
  "dhat",
+ "ethereum-types 0.15.1",
  "ethereum_ssz 0.7.1",
  "ethereum_ssz_derive 0.8.0",
+ "itertools 0.13.0",
  "milhouse 0.3.0",
  "reqwest",
  "serde",
  "ssz",
+ "ssz_types 0.8.0",
  "sszb",
  "sszb_derive",
  "try_from_iterator",

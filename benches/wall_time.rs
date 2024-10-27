@@ -71,35 +71,64 @@ fn basic_types(c: &mut Criterion) {
         b.iter(|| list.as_ssz_bytes())
     });
 
-    #[cfg(feature = "grandine")]
-    group.bench_with_input(
-        BenchmarkId::new("Grandine", "decode"),
-        list_bytes.as_slice(),
-        |b, bytes| {
-            b.iter(|| {
-                <PersistentList<u64, C> as SszRead<Config>>::from_ssz(&Config::mainnet(), bytes)
-                    .unwrap()
-            })
-        },
-    );
-    #[cfg(feature = "grandine")]
-    group.bench_with_input(
-        BenchmarkId::new("Grandine", "encode"),
-        &grandine_list,
-        |b, list| b.iter(|| SszWrite::to_ssz(list)),
-    );
+    // #[cfg(feature = "grandine")]
+    // group.bench_with_input(
+    //     BenchmarkId::new("Grandine", "decode"),
+    //     list_bytes.as_slice(),
+    //     |b, bytes| {
+    //         b.iter(|| {
+    //             <PersistentList<u64, C> as SszRead<Config>>::from_ssz(&Config::mainnet(), bytes)
+    //                 .unwrap()
+    //         })
+    //     },
+    // );
+    // #[cfg(feature = "grandine")]
+    // group.bench_with_input(
+    //     BenchmarkId::new("Grandine", "encode"),
+    //     &grandine_list,
+    //     |b, list| b.iter(|| SszWrite::to_ssz(list)),
+    // );
 
     group.finish();
 }
 
 #[cfg(feature = "block")]
 fn beacon_block(c: &mut Criterion) {
-    use ssz_arena::get_block_bytes;
+    use ssz_arena::{get_block_bytes, SignedBeaconBlock};
 
     let mut group = c.benchmark_group("SignedBeaconBlock");
     let block_bytes: Vec<u8> =
         std::fs::read("beacon-block.ssz").unwrap_or(get_block_bytes().unwrap());
     group.throughput(Throughput::Bytes(block_bytes.len() as u64));
+
+    #[cfg(feature = "sszb")]
+    group.bench_with_input(
+        BenchmarkId::new("Sszb", "decode"),
+        block_bytes.as_slice(),
+        |b, bytes| b.iter(|| <SignedBeaconBlock as SszDecode>::from_ssz_bytes(bytes).unwrap()),
+    );
+    #[cfg(feature = "sszb")]
+    let beacon_block =
+        <SignedBeaconBlock as SszDecode>::from_ssz_bytes(block_bytes.as_slice()).unwrap();
+    #[cfg(feature = "sszb")]
+    group.bench_with_input(
+        BenchmarkId::new("Sszb", "encode"),
+        &beacon_block,
+        |b, block| b.iter(|| block.to_ssz()),
+    );
+    #[cfg(feature = "sszb")]
+    let beacon_block =
+        <SignedBeaconBlock as SszDecode>::from_ssz_bytes(block_bytes.as_slice()).unwrap();
+    #[cfg(feature = "sszb")]
+    group.bench_with_input(
+        BenchmarkId::new("Sszb", "encode to slice"),
+        &beacon_block,
+        |b, block| {
+            let len = SszEncode::ssz_bytes_len(block);
+            let mut buf: Vec<u8> = vec![0u8; len];
+            b.iter(|| block.ssz_write(&mut buf.as_mut_slice()))
+        },
+    );
 
     #[cfg(feature = "sigp")]
     group.bench_with_input(
@@ -113,17 +142,17 @@ fn beacon_block(c: &mut Criterion) {
         },
     );
 
-    // #[cfg(feature = "sigp")]
-    // let beacon_block = SigpBeaconBlock::<MainnetEthSpec>::from_ssz_bytes_for_fork(
-    //     block_bytes.as_slice(),
-    //     ForkName::Deneb,
-    // )
-    // .unwrap();
+    #[cfg(feature = "sigp")]
+    let beacon_block = SigpBeaconBlock::<MainnetEthSpec>::from_ssz_bytes_for_fork(
+        block_bytes.as_slice(),
+        ForkName::Deneb,
+    )
+    .unwrap();
     // #[cfg(feature = "sigp")]
     // group.bench_with_input(
     //     BenchmarkId::new("Lighthouse", "encode"),
     //     &beacon_block,
-    //     |b, beacon_block| b.iter(|| *beacon_block.as_ssz_bytes()),
+    //     |b, block| b.iter(|| Encode::as_ssz_bytes(block)),
     // );
 
     #[cfg(feature = "grandine")]
@@ -138,7 +167,7 @@ fn beacon_block(c: &mut Criterion) {
         },
     );
 
-    //#[cfg(feature = "grandine")]
+    #[cfg(feature = "grandine")]
     let beacon_block = GrandineBeaconBlock::<Mainnet>::from_ssz_unchecked(
         &Config::mainnet(),
         block_bytes.as_slice(),
