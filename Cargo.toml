@@ -5,8 +5,11 @@ edition = "2021"
 
 [dependencies]
 criterion = "0.5.1"
+sszb_derive = { package = "sszb_derive", git = "https://github.com/ghiliweld/sszb.git" }
+sszb = { package = "sszb", git = "https://github.com/ghiliweld/sszb.git" }
 sigp_types = { package = "types", git = "https://github.com/sigp/lighthouse.git" }
 grandine_types = { package = "types", git = "https://github.com/grandinetech/grandine.git" }
+try_from_iter = { package = "try_from_iterator", git = "https://github.com/grandinetech/grandine.git" }
 grandine_ssz = { package = "ssz", git = "https://github.com/grandinetech/grandine.git" }
 typenum = "1.17.0"
 ethereum_ssz = "0.7.1"
@@ -15,6 +18,8 @@ reqwest = { version = "0.12.7", features = ["blocking", "json"] }
 serde = "1.0.210"
 ethereum_ssz_derive = "0.8.0"
 dhat = "0.3.3"
+
+[dev-dependencies]
 
 [[bench]]
 name = "wall_time"
@@ -25,7 +30,8 @@ name = "alloc"
 harness = false
 
 [features]
-default = []
+default = ["sszb"]
+sszb = []
 sigp = []
 grandine = []
 block = []

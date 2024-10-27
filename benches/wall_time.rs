@@ -1,19 +1,25 @@
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 
+#[cfg(feature = "sszb")]
+use sszb::{SszDecode, SszEncode};
+
+#[cfg(all(feature = "sigp", feature = "state"))]
+use sigp_types::{BeaconState as SigpBeaconState, ChainSpec, MainnetEthSpec};
+#[cfg(all(feature = "sigp", feature = "block"))]
+use sigp_types::{ForkName, MainnetEthSpec, SignedBeaconBlock as SigpBeaconBlock};
+#[cfg(feature = "sigp")]
+use ssz::{Decode, Encode};
+
 #[cfg(feature = "grandine")]
-use grandine_ssz::{SszRead, SszWrite};
+use grandine_ssz::{PersistentList, SszRead, SszWrite};
 #[cfg(all(feature = "grandine", feature = "state"))]
 use grandine_types::combined::BeaconState as GrandineBeaconState;
 #[cfg(all(feature = "grandine", feature = "block"))]
 use grandine_types::combined::SignedBeaconBlock as GrandineBeaconBlock;
 #[cfg(feature = "grandine")]
 use grandine_types::{config::Config, preset::Mainnet};
-#[cfg(all(feature = "sigp", feature = "state"))]
-use sigp_types::{BeaconState as SigpBeaconState, ChainSpec, MainnetEthSpec};
-#[cfg(all(feature = "sigp", feature = "block"))]
-use sigp_types::{ForkName, MainnetEthSpec, SignedBeaconBlock as SigpBeaconBlock};
-
-use ssz::{Decode, Encode};
+#[cfg(feature = "grandine")]
+use try_from_iter::TryFromIterator;
 
 fn basic_types(c: &mut Criterion) {
     use milhouse::List;
@@ -21,22 +27,67 @@ fn basic_types(c: &mut Criterion) {
     type C = typenum::U1099511627776;
     const N: u64 = 1_000_000;
 
-    let mut group = c.benchmark_group("List");
+    let mut group = c.benchmark_group("Milhouse List");
 
     // basic test case
     let size = N;
     let list = List::<u64, C>::try_from_iter(0..size).unwrap();
+
+    // let grandine_list = PersistentList::<u64, C>::try_from_iter(list.iter()).unwrap();
+
     let list_bytes = list.as_ssz_bytes();
 
     group.throughput(Throughput::Bytes(list_bytes.len() as u64));
+
+    #[cfg(feature = "sszb")]
     group.bench_with_input(
-        BenchmarkId::new("Milhouse", "decode"),
+        BenchmarkId::new("Sszb", "decode"),
+        list_bytes.as_slice(),
+        |b, bytes| b.iter(|| <List<u64, C> as SszDecode>::from_ssz_bytes(bytes).unwrap()),
+    );
+    #[cfg(feature = "sszb")]
+    group.bench_with_input(BenchmarkId::new("Sszb", "encode"), &list, |b, list| {
+        b.iter(|| list.to_ssz())
+    });
+    #[cfg(feature = "sszb")]
+    group.bench_with_input(
+        BenchmarkId::new("Sszb", "encode with slice"),
+        &list,
+        |b, list| {
+            let len = SszEncode::ssz_bytes_len(list);
+            let mut buf: Vec<u8> = vec![0u8; len];
+            b.iter(|| list.ssz_write(&mut buf.as_mut_slice()))
+        },
+    );
+
+    #[cfg(feature = "sigp")]
+    group.bench_with_input(
+        BenchmarkId::new("Sigp", "decode"),
         list_bytes.as_slice(),
         |b, bytes| b.iter(|| <List<u64, C> as Decode>::from_ssz_bytes(bytes).unwrap()),
     );
-    group.bench_with_input(BenchmarkId::new("Milhouse", "encode"), &list, |b, list| {
+    #[cfg(feature = "sigp")]
+    group.bench_with_input(BenchmarkId::new("Sigp", "encode"), &list, |b, list| {
         b.iter(|| list.as_ssz_bytes())
     });
+
+    #[cfg(feature = "grandine")]
+    group.bench_with_input(
+        BenchmarkId::new("Grandine", "decode"),
+        list_bytes.as_slice(),
+        |b, bytes| {
+            b.iter(|| {
+                <PersistentList<u64, C> as SszRead<Config>>::from_ssz(&Config::mainnet(), bytes)
+                    .unwrap()
+            })
+        },
+    );
+    #[cfg(feature = "grandine")]
+    group.bench_with_input(
+        BenchmarkId::new("Grainde", "encode"),
+        &grandine_list,
+        |b, list| b.iter(|| SszWrite::to_ssz(list)),
+    );
 
     group.finish();
 }
