@@ -3,10 +3,13 @@ use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Through
 #[cfg(feature = "sszb")]
 use sszb::{SszDecode, SszEncode};
 
+#[cfg(all(feature = "sigp", feature = "block"))]
+use sigp_types::{
+    ssz_tagged_signed_beacon_block::encode::as_ssz_bytes as sigp_block_encode, ForkName,
+    MainnetEthSpec, SignedBeaconBlock as SigpBeaconBlock,
+};
 #[cfg(all(feature = "sigp", feature = "state"))]
 use sigp_types::{BeaconState as SigpBeaconState, ChainSpec, MainnetEthSpec};
-#[cfg(all(feature = "sigp", feature = "block"))]
-use sigp_types::{ForkName, MainnetEthSpec, SignedBeaconBlock as SigpBeaconBlock};
 #[cfg(feature = "sigp")]
 use ssz::{Decode, Encode};
 
@@ -148,12 +151,13 @@ fn beacon_block(c: &mut Criterion) {
         ForkName::Deneb,
     )
     .unwrap();
-    // #[cfg(feature = "sigp")]
-    // group.bench_with_input(
-    //     BenchmarkId::new("Lighthouse", "encode"),
-    //     &beacon_block,
-    //     |b, block| b.iter(|| Encode::as_ssz_bytes(block)),
-    // );
+
+    #[cfg(feature = "sigp")]
+    group.bench_with_input(
+        BenchmarkId::new("Lighthouse", "encode"),
+        &beacon_block,
+        |b, block| b.iter(|| sigp_block_encode(block)),
+    );
 
     #[cfg(feature = "grandine")]
     group.bench_with_input(
