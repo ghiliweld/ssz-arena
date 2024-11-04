@@ -36,9 +36,7 @@ fn basic_types(c: &mut Criterion) {
     let size = N;
     let list = List::<u64, C>::try_from_iter(0..size).unwrap();
 
-    // let grandine_list = PersistentList::<u64, C>::try_from_iter(list.iter()).unwrap();
-
-    let list_bytes = list.as_ssz_bytes();
+    let list_bytes = list.to_ssz();
 
     group.throughput(Throughput::Bytes(list_bytes.len() as u64));
 
@@ -73,24 +71,6 @@ fn basic_types(c: &mut Criterion) {
     group.bench_with_input(BenchmarkId::new("Sigp", "encode"), &list, |b, list| {
         b.iter(|| list.as_ssz_bytes())
     });
-
-    // #[cfg(feature = "grandine")]
-    // group.bench_with_input(
-    //     BenchmarkId::new("Grandine", "decode"),
-    //     list_bytes.as_slice(),
-    //     |b, bytes| {
-    //         b.iter(|| {
-    //             <PersistentList<u64, C> as SszRead<Config>>::from_ssz(&Config::mainnet(), bytes)
-    //                 .unwrap()
-    //         })
-    //     },
-    // );
-    // #[cfg(feature = "grandine")]
-    // group.bench_with_input(
-    //     BenchmarkId::new("Grandine", "encode"),
-    //     &grandine_list,
-    //     |b, list| b.iter(|| SszWrite::to_ssz(list)),
-    // );
 
     group.finish();
 }

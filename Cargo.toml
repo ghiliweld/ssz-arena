@@ -23,6 +23,7 @@ alloy-primitives = "0.8.9"
 ethereum-types = "0.15.1"
 itertools = "0.13.0"
 ssz_types = "0.8.0"
+divan = "0.1.15"
 
 [dev-dependencies]
 
@@ -31,8 +32,11 @@ name = "wall_time"
 harness = false
 
 [[bench]]
-name = "alloc"
+name = "divan"
 harness = false
+
+[profile.release]
+debug = true
 
 [features]
 default = ["sszb"]
