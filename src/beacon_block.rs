@@ -2,7 +2,7 @@ use alloy_primitives::{FixedBytes, B256, U256};
 use bytes::buf::{Buf, BufMut};
 use ghilhouse::{List, Vector};
 use itertools::Itertools as _;
-use ssz_types::{BitList, BitVector, FixedVector, VariableList};
+use ssz_types::{BitList, BitVector};
 use sszb::*;
 use sszb_derive::{SszbDecode, SszbEncode};
 use tree_hash::*;
@@ -121,7 +121,7 @@ pub struct DepositData {
 
 #[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug, TreeHash)]
 pub struct Deposit {
-    pub proof: FixedVector<H256, typenum::U32>,
+    pub proof: Vector<H256, typenum::U32>,
     pub data: DepositData,
 }
 
@@ -165,13 +165,9 @@ pub struct ExecutionPayload {
     pub gas_limit: u64,
     pub gas_used: u64,
     pub timestamp: u64,
-    // TODO(Grandine Team): Try removing the `Arc` when we have data for benchmarking Bellatrix.
-    //                      The cost of cloning `ByteVariableList<MaxExtraDataBytes>` may be negligible.
     pub extra_data: ByteList<typenum::U32>,
     pub base_fee_per_gas: U256,
     pub block_hash: H256,
-    // TODO(Grandine Team): Consider removing the `Arc`. It can be removed with no loss of performance
-    //                      at the cost of making `ExecutionPayloadV1` more complicated.
     pub transactions: List<Transaction, typenum::U1048576>,
     pub withdrawals: List<Withdrawal, typenum::U16>,
 
