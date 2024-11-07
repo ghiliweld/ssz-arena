@@ -93,6 +93,7 @@ mod sigp {
     use divan::Bencher;
     use milhouse::List;
     use sigp_types::{
+        ssz_tagged_signed_beacon_block::encode::as_ssz_bytes as sigp_block_encode,
         BeaconState as SigpBeaconState, ChainSpec, ForkName, MainnetEthSpec,
         SignedBeaconBlock as SigpBeaconBlock,
     };
@@ -146,7 +147,7 @@ mod sigp {
                 .unwrap();
                 block
             })
-            .bench_values(|block| block.as_ssz_bytes());
+            .bench_values(|block| sigp_block_encode(&block));
     }
 
     #[cfg(feature = "state")]

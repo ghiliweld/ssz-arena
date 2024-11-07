@@ -1,16 +1,21 @@
-use alloy_primitives::{FixedBytes, U256};
+use alloy_primitives::{FixedBytes, B256, U256};
 use bytes::buf::{Buf, BufMut};
-use ethereum_types::{H160, H256};
+use ghilhouse::{List, Vector};
 use itertools::Itertools as _;
 use ssz_types::{BitList, BitVector, FixedVector, VariableList};
 use sszb::*;
 use sszb_derive::{SszbDecode, SszbEncode};
+use tree_hash::*;
+use tree_hash_derive::TreeHash;
 
-type ByteList<N> = VariableList<u8, N>;
-type ByteVector<N> = FixedVector<u8, N>;
+type ByteList<N> = List<u8, N>;
+type ByteVector<N> = Vector<u8, N>;
 pub type SignatureBytes = ByteVector<typenum::U96>;
 type PublicKeyBytes = ByteVector<typenum::U48>;
 type KZGCommitment = ByteVector<typenum::U48>;
+type H32 = ByteVector<typenum::U4>;
+type H160 = ByteVector<typenum::U20>;
+type H256 = ByteVector<typenum::U32>;
 
 #[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug)]
 pub struct SignedBeaconBlock {
@@ -18,13 +23,13 @@ pub struct SignedBeaconBlock {
     pub signature: SignatureBytes,
 }
 
-#[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug)]
+#[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug, TreeHash)]
 pub struct SignedBeaconBlockHeader {
     pub message: BeaconBlockHeader,
     pub signature: SignatureBytes,
 }
 
-#[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug)]
+#[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug, TreeHash)]
 pub struct BeaconBlockHeader {
     pub slot: u64,
     pub proposer_index: u64,
@@ -47,15 +52,15 @@ pub struct BeaconBlockBody {
     pub randao_reveal: SignatureBytes,
     pub eth1_data: Eth1Data,
     pub graffiti: H256,
-    pub proposer_slashings: VariableList<ProposerSlashing, typenum::U16>,
-    pub attester_slashings: VariableList<AttesterSlashing, typenum::U2>,
-    pub attestations: VariableList<Attestation, typenum::U128>,
-    pub deposits: VariableList<Deposit, typenum::U16>,
-    pub voluntary_exits: VariableList<SignedVoluntaryExit, typenum::U16>,
+    pub proposer_slashings: List<ProposerSlashing, typenum::U16>,
+    pub attester_slashings: List<AttesterSlashing, typenum::U2>,
+    pub attestations: List<Attestation, typenum::U128>,
+    pub deposits: List<Deposit, typenum::U16>,
+    pub voluntary_exits: List<SignedVoluntaryExit, typenum::U16>,
     pub sync_aggregate: SyncAggregate,
     pub execution_payload: ExecutionPayload,
-    pub bls_to_execution_changes: VariableList<SignedBlsToExecutionChange, typenum::U16>,
-    pub blob_kzg_commitments: VariableList<KZGCommitment, typenum::U4096>,
+    pub bls_to_execution_changes: List<SignedBlsToExecutionChange, typenum::U16>,
+    pub blob_kzg_commitments: List<KZGCommitment, typenum::U4096>,
 }
 
 #[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug)]
@@ -65,19 +70,19 @@ pub struct Eth1Data {
     pub block_hash: H256,
 }
 
-#[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug)]
+#[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug, TreeHash)]
 pub struct ProposerSlashing {
     pub signed_header_1: SignedBeaconBlockHeader,
     pub signed_header_2: SignedBeaconBlockHeader,
 }
 
-#[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug)]
+#[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug, TreeHash)]
 pub struct Checkpoint {
     pub epoch: u64,
     pub root: H256,
 }
 
-#[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug)]
+#[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug, TreeHash)]
 pub struct AttestationData {
     pub slot: u64,
     pub index: u64,
@@ -86,27 +91,27 @@ pub struct AttestationData {
     pub target: Checkpoint,
 }
 
-#[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug)]
+#[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug, TreeHash)]
 pub struct IndexedAttestation {
-    pub attesting_indices: VariableList<u64, typenum::U2048>,
+    pub attesting_indices: List<u64, typenum::U2048>,
     pub data: AttestationData,
     pub signature: SignatureBytes,
 }
 
-#[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug)]
+#[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug, TreeHash)]
 pub struct AttesterSlashing {
     pub attestation_1: IndexedAttestation,
     pub attestation_2: IndexedAttestation,
 }
 
-#[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug)]
+#[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug, TreeHash)]
 pub struct Attestation {
     pub aggregation_bits: BitList<typenum::U2048>,
     pub data: AttestationData,
     pub signature: SignatureBytes,
 }
 
-#[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug)]
+#[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug, TreeHash)]
 pub struct DepositData {
     pub pubkey: PublicKeyBytes,
     pub withdrawal_credentials: H256,
@@ -114,19 +119,19 @@ pub struct DepositData {
     pub signature: SignatureBytes,
 }
 
-#[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug)]
+#[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug, TreeHash)]
 pub struct Deposit {
     pub proof: FixedVector<H256, typenum::U32>,
     pub data: DepositData,
 }
 
-#[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug)]
+#[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug, TreeHash)]
 pub struct VoluntaryExit {
     pub epoch: u64,
     pub validator_index: u64,
 }
 
-#[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug)]
+#[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug, TreeHash)]
 pub struct SignedVoluntaryExit {
     pub message: VoluntaryExit,
     pub signature: SignatureBytes,
@@ -140,7 +145,7 @@ pub struct SyncAggregate {
 
 pub type Transaction = ByteList<typenum::U1073741824>;
 
-#[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug)]
+#[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug, TreeHash)]
 pub struct Withdrawal {
     pub index: u64,
     pub validator_index: u64,
@@ -167,21 +172,21 @@ pub struct ExecutionPayload {
     pub block_hash: H256,
     // TODO(Grandine Team): Consider removing the `Arc`. It can be removed with no loss of performance
     //                      at the cost of making `ExecutionPayloadV1` more complicated.
-    pub transactions: VariableList<Transaction, typenum::U1048576>,
-    pub withdrawals: VariableList<Withdrawal, typenum::U16>,
+    pub transactions: List<Transaction, typenum::U1048576>,
+    pub withdrawals: List<Withdrawal, typenum::U16>,
 
     // New in Deneb
     pub blob_gas_used: u64,
     pub excess_blob_gas: u64,
 }
 
-#[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug)]
+#[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug, TreeHash)]
 pub struct SignedBlsToExecutionChange {
     pub message: BlsToExecutionChange,
     pub signature: SignatureBytes,
 }
 
-#[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug)]
+#[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug, TreeHash)]
 pub struct BlsToExecutionChange {
     pub validator_index: u64,
     pub from_bls_pubkey: PublicKeyBytes,

@@ -6,3 +6,6 @@ pub use mock_struct::Foo;
 
 mod beacon_block;
 pub use beacon_block::SignedBeaconBlock;
+
+mod beacon_state;
+pub use beacon_state::BeaconState;

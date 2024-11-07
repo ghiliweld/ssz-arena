@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-criterion = "0.5.1"
+criterion = { git = "https://github.com/ghiliweld/criterion.rs.git", rev = "0e00b086106989275d29a6b4a56dcd1a9150eb93" }
 sszb_derive = { package = "sszb_derive", git = "https://github.com/ghiliweld/sszb.git" }
 sszb = { package = "sszb", git = "https://github.com/ghiliweld/sszb.git" }
 sigp_types = { package = "types", git = "https://github.com/sigp/lighthouse.git" }
@@ -14,6 +14,7 @@ grandine_ssz = { package = "ssz", git = "https://github.com/grandinetech/grandin
 typenum = "1.17.0"
 ethereum_ssz = "0.7.1"
 milhouse = "0.3.0"
+ghilhouse = { package = "milhouse", git = "https://github.com/ghiliweld/milhouse.git" }
 reqwest = { version = "0.12.7", features = ["blocking", "json"] }
 serde = "1.0.210"
 ethereum_ssz_derive = "0.8.0"
@@ -24,6 +25,8 @@ ethereum-types = "0.15.1"
 itertools = "0.13.0"
 ssz_types = "0.8.0"
 divan = "0.1.15"
+tree_hash = "0.8.0"
+tree_hash_derive = "0.8.0"
 
 [dev-dependencies]
 
