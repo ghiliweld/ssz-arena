@@ -8,4 +8,4 @@ mod beacon_block;
 pub use beacon_block::SignedBeaconBlock;
 
 mod beacon_state;
-pub use beacon_state::BeaconState;
+pub use beacon_state::{BeaconState, ExecutionPayloadHeader};

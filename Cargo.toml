@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-criterion = { git = "https://github.com/ghiliweld/criterion.rs.git", rev = "0e00b086106989275d29a6b4a56dcd1a9150eb93" }
+criterion = "0.5.1"
 sszb_derive = { package = "sszb_derive", git = "https://github.com/ghiliweld/sszb.git" }
 sszb = { package = "sszb", git = "https://github.com/ghiliweld/sszb.git" }
 sigp_types = { package = "types", git = "https://github.com/sigp/lighthouse.git" }

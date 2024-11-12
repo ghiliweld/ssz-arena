@@ -1,21 +1,19 @@
-use alloy_primitives::{FixedBytes, B256, U256};
+use alloy_primitives::{Address, FixedBytes, B256, U256};
 use bytes::buf::{Buf, BufMut};
-use ghilhouse::{List, Vector};
 use itertools::Itertools as _;
-use ssz_types::{BitList, BitVector};
+use ssz_types::{BitList, BitVector, FixedVector, VariableList as List};
 use sszb::*;
 use sszb_derive::{SszbDecode, SszbEncode};
 use tree_hash::*;
 use tree_hash_derive::TreeHash;
 
 type ByteList<N> = List<u8, N>;
-type ByteVector<N> = Vector<u8, N>;
+type ByteVector<N> = FixedVector<u8, N>;
 pub type SignatureBytes = ByteVector<typenum::U96>;
-type PublicKeyBytes = ByteVector<typenum::U48>;
-type KZGCommitment = ByteVector<typenum::U48>;
-type H32 = ByteVector<typenum::U4>;
-type H160 = ByteVector<typenum::U20>;
-type H256 = ByteVector<typenum::U32>;
+type PublicKeyBytes = [u8; 48];
+type KZGCommitment = [u8; 48];
+type H160 = Address;
+type H256 = B256;
 
 #[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug)]
 pub struct SignedBeaconBlock {
@@ -51,7 +49,7 @@ pub struct BeaconBlock {
 pub struct BeaconBlockBody {
     pub randao_reveal: SignatureBytes,
     pub eth1_data: Eth1Data,
-    pub graffiti: H256,
+    pub graffiti: FixedBytes<32>,
     pub proposer_slashings: List<ProposerSlashing, typenum::U16>,
     pub attester_slashings: List<AttesterSlashing, typenum::U2>,
     pub attestations: List<Attestation, typenum::U128>,
@@ -121,7 +119,7 @@ pub struct DepositData {
 
 #[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug, TreeHash)]
 pub struct Deposit {
-    pub proof: Vector<H256, typenum::U32>,
+    pub proof: FixedVector<H256, typenum::U32>,
     pub data: DepositData,
 }
 

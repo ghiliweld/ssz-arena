@@ -2,3 +2,5 @@
 *.ssz
 Cargo.lock
 .DS_Store
+profile.json
+examples/
