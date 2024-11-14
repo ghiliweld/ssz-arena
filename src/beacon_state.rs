@@ -2,6 +2,7 @@ use alloy_primitives::{Address, B256, U256};
 use bytes::buf::{Buf, BufMut};
 use ghilhouse::{List, Vector};
 use itertools::Itertools as _;
+use ssz_derive::{Decode, Encode};
 use ssz_types::{BitVector, FixedVector, VariableList};
 use sszb::*;
 use sszb_derive::{SszbDecode, SszbEncode};
@@ -57,7 +58,7 @@ pub struct SyncCommittee {
     pub aggregate_pubkey: PublicKeyBytes,
 }
 
-#[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug, TreeHash)]
+#[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug, TreeHash, Default, Decode)]
 pub struct ExecutionPayloadHeader {
     pub parent_hash: B256,
     pub fee_recipient: Address,

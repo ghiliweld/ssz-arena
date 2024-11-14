@@ -11,7 +11,7 @@ fn main() {
 mod sszb {
     use divan::Bencher;
     use milhouse::List;
-    use ssz_arena::{get_block_bytes, SignedBeaconBlock};
+    use ssz_arena::{get_block_bytes, get_state_bytes, BeaconState, SignedBeaconBlock};
     use sszb::{SszDecode, SszEncode};
 
     type C = typenum::U1099511627776;
@@ -49,23 +49,25 @@ mod sszb {
             });
     }
 
-    #[cfg(feature = "block")]
-    #[divan::bench]
-    fn encode_beacon_block_naive(bencher: Bencher) {
-        let bytes = get_block_bytes().unwrap();
-        bencher
-            .with_inputs(|| {
-                let beacon_block =
-                    <SignedBeaconBlock as SszDecode>::from_ssz_bytes(bytes.as_slice()).unwrap();
-                beacon_block
-            })
-            .bench_values(|block| block.to_ssz());
-    }
+    // #[cfg(feature = "block")]
+    // #[divan::bench]
+    // fn encode_beacon_block_naive(bencher: Bencher) {
+    //     let bytes =
+    //         std::fs::read("beacon-block.ssz").unwrap_or_else(|_| get_block_bytes().unwrap());
+    //     bencher
+    //         .with_inputs(|| {
+    //             let beacon_block =
+    //                 <SignedBeaconBlock as SszDecode>::from_ssz_bytes(bytes.as_slice()).unwrap();
+    //             beacon_block
+    //         })
+    //         .bench_values(|block| block.to_ssz());
+    // }
 
     #[cfg(feature = "block")]
     #[divan::bench]
     fn encode_beacon_block_fast(bencher: Bencher) {
-        let bytes = get_block_bytes().unwrap();
+        let bytes =
+            std::fs::read("beacon-block.ssz").unwrap_or_else(|_| get_block_bytes().unwrap());
         bencher
             .with_inputs(|| {
                 let beacon_block =
@@ -80,10 +82,102 @@ mod sszb {
     #[cfg(feature = "block")]
     #[divan::bench]
     fn decode_beacon_block(bencher: Bencher) {
-        let bytes = std::fs::read("beacon-block.ssz").unwrap_or(get_block_bytes().unwrap());
+        let bytes =
+            std::fs::read("beacon-block.ssz").unwrap_or_else(|_| get_block_bytes().unwrap());
         bencher.bench_local(move || {
             <SignedBeaconBlock as SszDecode>::from_ssz_bytes(bytes.as_slice()).unwrap()
         });
+    }
+
+    // #[cfg(feature = "state")]
+    // #[divan::bench]
+    // fn encode_beacon_state_naive(bencher: Bencher) {
+    //     let bytes = std::fs::read("beacon-state.ssz").unwrap_or_else(get_state_bytes().unwrap());
+    //     bencher
+    //         .with_inputs(|| {
+    //             let beacon_state =
+    //                 <BeaconState as SszDecode>::from_ssz_bytes(bytes.as_slice()).unwrap();
+    //             beacon_state
+    //         })
+    //         .bench_values(|state| state.to_ssz());
+    // }
+
+    #[cfg(feature = "state")]
+    #[divan::bench]
+    fn encode_beacon_state_fast(bencher: Bencher) {
+        let bytes =
+            std::fs::read("beacon-state.ssz").unwrap_or_else(|_| get_state_bytes().unwrap());
+        bencher
+            .with_inputs(|| {
+                let beacon_state =
+                    <BeaconState as SszDecode>::from_ssz_bytes(bytes.as_slice()).unwrap();
+                let len = SszEncode::ssz_bytes_len(&beacon_state);
+                let buf: Vec<u8> = vec![0u8; len];
+                (beacon_state, buf)
+            })
+            .bench_values(move |(state, mut buf)| state.ssz_write(&mut buf.as_mut_slice()));
+    }
+
+    #[cfg(feature = "state")]
+    #[divan::bench]
+    fn decode_beacon_state(bencher: Bencher) {
+        let bytes =
+            std::fs::read("beacon-state.ssz").unwrap_or_else(|_| get_state_bytes().unwrap());
+        bencher.bench_local(move || {
+            <BeaconState as SszDecode>::from_ssz_bytes(bytes.as_slice()).unwrap()
+        });
+    }
+}
+
+#[divan::bench_group]
+mod exec_payload_header_list {
+    use divan::Bencher;
+    use ghilhouse::List;
+    use ssz::Decode;
+    use ssz_arena::ExecutionPayloadHeader;
+    use sszb::{SszDecode, SszEncode};
+
+    type C = typenum::U1000000;
+    const N: u64 = 1_000;
+
+    #[divan::bench]
+    fn encode_list_fast(bencher: Bencher) {
+        bencher
+            .with_inputs(|| {
+                let size: usize = 1000;
+                let iter = vec![ExecutionPayloadHeader::default(); size];
+                let list = List::<ExecutionPayloadHeader, C>::try_from_iter(iter).unwrap();
+                let len = SszEncode::ssz_bytes_len(&list);
+                let buf: Vec<u8> = vec![0u8; len];
+                (list, buf)
+            })
+            .bench_values(|(list, mut buf)| list.ssz_write(&mut buf.as_mut_slice()));
+    }
+
+    #[divan::bench]
+    fn decode_list_sszb(bencher: Bencher) {
+        let size: usize = 1000;
+        let iter = vec![ExecutionPayloadHeader::default(); size];
+        let list = List::<ExecutionPayloadHeader, C>::try_from_iter(iter).unwrap();
+        bencher
+            .with_inputs(|| list.to_ssz())
+            .bench_values(|bytes: Vec<u8>| {
+                <List<ExecutionPayloadHeader, C> as SszDecode>::from_ssz_bytes(bytes.as_slice())
+                    .unwrap()
+            });
+    }
+
+    #[divan::bench]
+    fn decode_list_sigp(bencher: Bencher) {
+        let size: usize = 1000;
+        let iter = vec![ExecutionPayloadHeader::default(); size];
+        let list = List::<ExecutionPayloadHeader, C>::try_from_iter(iter).unwrap();
+        bencher
+            .with_inputs(|| list.to_ssz())
+            .bench_values(|bytes: Vec<u8>| {
+                <List<ExecutionPayloadHeader, C> as Decode>::from_ssz_bytes(bytes.as_slice())
+                    .unwrap()
+            });
     }
 }
 
@@ -112,6 +206,7 @@ mod sigp {
             })
             .bench_values(|list| list.as_ssz_bytes());
     }
+
     #[divan::bench]
     fn decode_list(bencher: Bencher) {
         let list = List::<u64, C>::try_from_iter(0..N).unwrap();
@@ -125,7 +220,8 @@ mod sigp {
     #[cfg(feature = "block")]
     #[divan::bench]
     fn decode_sigp_beacon_block(bencher: Bencher) {
-        let bytes = get_block_bytes().unwrap();
+        let bytes =
+            std::fs::read("beacon-block.ssz").unwrap_or_else(|_| get_block_bytes().unwrap());
         bencher.bench_local(move || {
             SigpBeaconBlock::<MainnetEthSpec>::from_ssz_bytes_for_fork(
                 bytes.as_slice(),
@@ -137,7 +233,8 @@ mod sigp {
     #[cfg(feature = "block")]
     #[divan::bench]
     fn encode_sigp_beacon_block(bencher: Bencher) {
-        let bytes = get_block_bytes().unwrap();
+        let bytes =
+            std::fs::read("beacon-block.ssz").unwrap_or_else(|_| get_block_bytes().unwrap());
         bencher
             .with_inputs(move || {
                 let block = SigpBeaconBlock::<MainnetEthSpec>::from_ssz_bytes_for_fork(
@@ -153,7 +250,8 @@ mod sigp {
     #[cfg(feature = "state")]
     #[divan::bench]
     fn decode_sigp_beacon_state(bencher: Bencher) {
-        let bytes = get_state_bytes().unwrap();
+        let bytes =
+            std::fs::read("beacon-state.ssz").unwrap_or_else(|_| get_state_bytes().unwrap());
         bencher.bench_local(move || {
             SigpBeaconState::<MainnetEthSpec>::from_ssz_bytes(
                 bytes.as_slice(),
@@ -162,21 +260,21 @@ mod sigp {
         });
     }
 
-    #[cfg(feature = "state")]
-    #[divan::bench]
-    fn encode_sigp_beacon_state(bencher: Bencher) {
-        let bytes = get_state_bytes().unwrap();
-        bencher
-            .with_inputs(move || {
-                let state = SigpBeaconState::<MainnetEthSpec>::from_ssz_bytes(
-                    bytes.as_slice(),
-                    &ChainSpec::default(),
-                )
-                .unwrap();
-                state
-            })
-            .bench_values(|state| state.as_ssz_bytes());
-    }
+    // #[divan::bench]
+    // fn encode_sigp_beacon_state(bencher: Bencher) {
+    //     let bytes =
+    //         std::fs::read("beacon-state.ssz").unwrap_or_else(|_| get_state_bytes().unwrap());
+    //     bencher
+    //         .with_inputs(|| {
+    //             let state = SigpBeaconState::<MainnetEthSpec>::from_ssz_bytes(
+    //                 bytes.as_slice(),
+    //                 &ChainSpec::default(),
+    //             )
+    //             .unwrap();
+    //             state
+    //         })
+    //         .bench_values(|state| state.as_ssz_bytes());
+    // }
 }
 
 #[cfg(feature = "grandine")]
