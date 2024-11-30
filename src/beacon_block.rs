@@ -1,16 +1,19 @@
 use alloy_primitives::{Address, FixedBytes, B256, U256};
 use bytes::buf::{Buf, BufMut};
 use itertools::Itertools as _;
+use sigp_types::TransactionsOpaque;
 use ssz_types::{BitList, BitVector, FixedVector, VariableList as List};
 use sszb::*;
 use sszb_derive::{SszbDecode, SszbEncode};
 use tree_hash::*;
 use tree_hash_derive::TreeHash;
 
+use crate::TxOpaque;
+
 type ByteList<N> = List<u8, N>;
 type ByteVector<N> = FixedVector<u8, N>;
-pub type SignatureBytes = ByteVector<typenum::U96>;
-type PublicKeyBytes = [u8; 48];
+// pub type SignatureBytes = ByteVector<typenum::U96>;
+type PublicKeyBytes = PKBytes; //[u8; 48];
 type KZGCommitment = [u8; 48];
 type H160 = Address;
 type H256 = B256;
@@ -18,13 +21,13 @@ type H256 = B256;
 #[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug)]
 pub struct SignedBeaconBlock {
     pub message: BeaconBlock,
-    pub signature: SignatureBytes,
+    pub signature: Sig,
 }
 
 #[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug, TreeHash)]
 pub struct SignedBeaconBlockHeader {
     pub message: BeaconBlockHeader,
-    pub signature: SignatureBytes,
+    pub signature: Sig,
 }
 
 #[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug, TreeHash)]
@@ -47,7 +50,7 @@ pub struct BeaconBlock {
 
 #[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug)]
 pub struct BeaconBlockBody {
-    pub randao_reveal: SignatureBytes,
+    pub randao_reveal: Sig,
     pub eth1_data: Eth1Data,
     pub graffiti: FixedBytes<32>,
     pub proposer_slashings: List<ProposerSlashing, typenum::U16>,
@@ -93,7 +96,7 @@ pub struct AttestationData {
 pub struct IndexedAttestation {
     pub attesting_indices: List<u64, typenum::U2048>,
     pub data: AttestationData,
-    pub signature: SignatureBytes,
+    pub signature: Sig,
 }
 
 #[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug, TreeHash)]
@@ -106,7 +109,7 @@ pub struct AttesterSlashing {
 pub struct Attestation {
     pub aggregation_bits: BitList<typenum::U2048>,
     pub data: AttestationData,
-    pub signature: SignatureBytes,
+    pub signature: Sig,
 }
 
 #[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug, TreeHash)]
@@ -114,7 +117,7 @@ pub struct DepositData {
     pub pubkey: PublicKeyBytes,
     pub withdrawal_credentials: H256,
     pub amount: u64,
-    pub signature: SignatureBytes,
+    pub signature: Sig,
 }
 
 #[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug, TreeHash)]
@@ -132,13 +135,13 @@ pub struct VoluntaryExit {
 #[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug, TreeHash)]
 pub struct SignedVoluntaryExit {
     pub message: VoluntaryExit,
-    pub signature: SignatureBytes,
+    pub signature: Sig,
 }
 
 #[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug)]
 pub struct SyncAggregate {
     pub sync_committee_bits: BitVector<typenum::U512>,
-    pub sync_committee_signature: SignatureBytes,
+    pub sync_committee_signature: Sig,
 }
 
 pub type Transaction = ByteList<typenum::U1073741824>;
@@ -166,7 +169,8 @@ pub struct ExecutionPayload {
     pub extra_data: ByteList<typenum::U32>,
     pub base_fee_per_gas: U256,
     pub block_hash: H256,
-    pub transactions: List<Transaction, typenum::U1048576>,
+    // pub transactions: List<Transaction, typenum::U1048576>,
+    pub transactions: TxOpaque,
     pub withdrawals: List<Withdrawal, typenum::U16>,
 
     // New in Deneb
@@ -177,7 +181,7 @@ pub struct ExecutionPayload {
 #[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug, TreeHash)]
 pub struct SignedBlsToExecutionChange {
     pub message: BlsToExecutionChange,
-    pub signature: SignatureBytes,
+    pub signature: Sig,
 }
 
 #[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug, TreeHash)]

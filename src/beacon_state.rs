@@ -2,13 +2,13 @@ use alloy_primitives::{Address, B256, U256};
 use bytes::buf::{Buf, BufMut};
 use ghilhouse::{List, Vector};
 use itertools::Itertools as _;
-use ssz_derive::{Decode, Encode};
+use ssz_derive::Decode;
 use ssz_types::{BitVector, FixedVector, VariableList};
 use sszb::*;
 use sszb_derive::{SszbDecode, SszbEncode};
 use tree_hash_derive::TreeHash;
 
-type PublicKeyBytes = [u8; 48];
+type PublicKeyBytes = PKBytes; // [u8; 48];
 type H32 = [u8; 4];
 
 #[derive(Clone, SszbEncode, SszbDecode, PartialEq, Debug, TreeHash, Default)]

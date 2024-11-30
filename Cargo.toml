@@ -7,7 +7,8 @@ edition = "2021"
 criterion = { version = "0.5.1", features = ["html_reports"] }
 sszb_derive = { package = "sszb_derive", git = "https://github.com/ghiliweld/sszb.git" }
 sszb = { package = "sszb", git = "https://github.com/ghiliweld/sszb.git" }
-sigp_types = { package = "types", git = "https://github.com/sigp/lighthouse.git" }
+sigp_types = { package = "types", git = "https://github.com/paulhauner/lighthouse.git", branch = "sszb-compare" }
+sigp_bls = { package = "bls", git = "https://github.com/paulhauner/lighthouse.git", branch = "sszb-compare" }
 grandine_types = { package = "types", git = "https://github.com/grandinetech/grandine.git" }
 try_from_iter = { package = "try_from_iterator", git = "https://github.com/grandinetech/grandine.git" }
 grandine_ssz = { package = "ssz", git = "https://github.com/grandinetech/grandine.git" }
@@ -29,6 +30,7 @@ tree_hash = "0.8.0"
 tree_hash_derive = "0.8.0"
 
 [dev-dependencies]
+dhat = "0.3.3"
 
 [[bench]]
 name = "wall_time"

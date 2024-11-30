@@ -9,3 +9,6 @@ pub use beacon_block::SignedBeaconBlock;
 
 mod beacon_state;
 pub use beacon_state::{BeaconState, ExecutionPayloadHeader};
+
+mod tx_opaque;
+pub use tx_opaque::*;
